@@ -5,7 +5,7 @@ Last updated 2026-10-27. Read this file, then CLAUDE.md, then docs/levels.md, do
 Live: https://timothyhadfield.github.io/bank/ · repo TimothyHadfield/bank (Pages, main / root).
 
 ## Goal right now
-A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah Wilson, $1.99): 2-8 players, good computers, pass-and-play, real-dice mode, rules + guided game, stats, install. Online rooms waiting on Tim (over the free-quota guard).
+A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah Wilson, $1.99): 2-8 players, good computers, pass-and-play, real-dice mode, rules + guided game, stats, install. Online rooms ON since 2026-10-27 (Tim: "enable it to all games for now and we can disable it later if it becomes too much").
 
 ## Status
 | Part | State |
@@ -17,11 +17,11 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 | My stats, Elo, awards, Daily game | Done (_profile) |
 | Install + offline | Done, pwa-check 18/18 |
 | Real dice (pass-and-play) | Done: Roll opens a picker, tap the two faces |
-| Online rooms | Built, OFF (docs/online.md) |
+| Online rooms | ON (kit v2), ~440 writes / ~1,007 reads per game; two-phone real-Firestore test passed (docs/online.md) |
 | Hub card, trainer link, PORTFOLIO row | Done |
 
 ## Authorized next steps
-- (2026-10-27) Nothing beyond upkeep. Online needs Tim's go (a cheaper design, or switching it on as is).
+- (2026-10-27) Online switched on (Tim's go). Nothing else beyond upkeep.
 
 ## Standing instructions (Tim's words)
 - "start building every single improvement you can think of after your competitor analysis."
@@ -46,7 +46,7 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 
 ## NOT verified
 - A real iPhone (only WebKit at iPhone size), sound on a device, home-screen install on a device.
-- Online rooms against the real Firestore (not run: online is OFF).
+- Online rooms on two real iPhones (two headless WebKit phones on real Firestore only, 2026-10-27).
 
 ## Reviewer gaps left (Tim's calls or later)
 - No undo in real-dice mode; BANK is disabled during the ~1 s roll animation; no 5-round option; no shared leaderboard; the first-time offer covers the tab bar; phase line during the bust animation.

@@ -498,8 +498,8 @@ function pop(btn, text) {
   setTimeout(() => document.addEventListener("click", () => p.remove(), { once: true }), 0);
 }
 
-// ------------------------------------------------------------------ online (switched off: see docs/online.md)
-const ONLINE_ON = /[?&]online=1\b/.test(location.search) || store.get("bank:online", false);
+// ------------------------------------------------------------------ online (on since 2026-10-27, Tim's go; cost in docs/online.md)
+const ONLINE_ON = true;
 function onlineSetupHTML() {
   if (!ONLINE_ON) return `<div class="panel off"><b>Online rooms are coming.</b><p class="muted">Built, switched off for now to stay inside the free plan.</p></div>`;
   const code = (new URLSearchParams(location.search).get("room") || "").toUpperCase();
