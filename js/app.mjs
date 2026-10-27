@@ -512,7 +512,7 @@ function onlineSetupHTML() {
 function wireOnlineSetup() { /* handled by the delegated click handler */ }
 async function getOnline() {
   if (online) return online;
-  const mod = await import("./online.js");
+  const mod = await import("./online.js?v=a3d0418b");
   online = mod.createOnline({ game, gameId: "bank", botDelayMs: 1500 });
   online.on("change", onSnap);
   online.on("error", (m) => toast(m));

@@ -29,6 +29,7 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 - "I want to make our boardgames the best in every single metric we can."
 
 ## Traps
+- **online.js cache stamp (2026-10-27):** every import of `js/online.js` uses `?v=a3d0418b`, the `_online` content stamp. After a re-copy: put the new stamp from `node ../_online/tools/stamp.mjs` there, bump the importing file's `?v=` (and pwa.js `data-version`), then `node ../_online/tools/stamp.mjs --check .` must say OK.
 - Shared kit files are unchanged copies (list in CLAUDE.md). Fix them in the kit, not here.
 - Bots must never use the game's rng (the Daily game gives everyone the same dice). Personal habits come from `unit(name, ...)` in js/bots.mjs.
 - The engine's `normOptions` reads `DEFAULT_OPTIONS`; change the default there only.
