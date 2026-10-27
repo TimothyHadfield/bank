@@ -1,0 +1,8 @@
+{
+  "repo": "bank",
+  "ready": "!!(window.BankApp && document.querySelector('[data-act=start], [data-act=roll]'))",
+  "play": ["(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); const st = document.querySelector('[data-act=start]'); if (st) st.click(); for (let i = 0; i < 60 && !document.querySelector('[data-act=roll]:not(:disabled)'); i++) await w(100); document.querySelector('[data-act=roll]').click(); })()"],
+  "played": "(() => { const G = BankApp.G; return !!G && !G.s.over && (G.s.roll >= 1 || G.s.round > 1) && !BankApp.busy; })()",
+  "safe": "(() => { document.querySelector('#tabs [data-tab=settings]').click(); const q = document.querySelector('[data-act=quit]'); if (q) q.click(); })()",
+  "debug": "JSON.stringify(BankApp.G && { r: BankApp.G.s.round, roll: BankApp.G.s.roll, busy: BankApp.busy })"
+}

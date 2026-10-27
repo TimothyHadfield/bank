@@ -1,0 +1,10 @@
+{
+  "name": "bank",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/engine.test.mjs",
+    "pwa": "node tools/pwa-check.mjs",
+    "levels": "node tools/measure-levels.mjs 1000 20"
+  }
+}

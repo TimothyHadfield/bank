@@ -1,0 +1,14 @@
+* text=auto
+js/table.js -text
+js/fx.js -text
+js/online.js -text
+js/coach.js -text
+js/profile.js -text
+js/pwa.js -text
+css/table.css -text
+css/coach.css -text
+css/profile.css -text
+sw.js -text
+tools/make-icons.mjs -text
+tools/pwa-check.mjs -text
+*.png binary
