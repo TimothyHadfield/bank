@@ -179,3 +179,29 @@ test("plays through the shared _online kit's local room (same game contract as o
   assert.equal(room.state.hist.length, 10);
   assert.equal(room.view(0).status, "finished");
 });
+
+test("Hard computers play their own games (they rarely end on the same score)", () => {
+  let same = 0;
+  const G = 120;
+  for (let g = 0; g < G; g++) {
+    const levels = ["medium", "hard", "hard", "hard"];        // like you + 3 Hard (the Daily game)
+    const s = playGame(levels, { seed: 5000 + g });
+    const h = s.scores.slice(1);
+    if (new Set(h).size < h.length) same++;
+  }
+  assert.ok(same / G < 0.5, `Hard seats tied in ${(100 * same / G).toFixed(0)}% of games`);
+});
+
+test("guided game: the computers stay in during round 1", () => {
+  const s = setup(3, { rounds: 10 }, mulberry(1), seats(["human", "computer", "computer"]));
+  s.levels = ["hard", "tutor", "tutor"];
+  s.roller = 0;
+  const r = stacked([3, 4, 5, 5, 6, 2, 3, 3, 4, 5, 2, 5]);
+  for (let k = 0; k < 4; k++) apply(s, s.roller, { t: "roll" }, r);
+  assert.equal(s.pot, 176);
+  assert.deepEqual(s.banked, [false, false, false], "nobody banked yet");
+  apply(s, 0, { t: "bank", rid: s.rid });
+  while (s.round === 1) apply(s, s.roller, { t: "roll" }, r);
+  assert.deepEqual(s.hist[0].g, [176, 0, 0]);
+  assert.ok(s.hist[0].bust);
+});

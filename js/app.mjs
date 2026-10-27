@@ -7,7 +7,7 @@ const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const COLORS = ["#6ea8fe", "#f0b354", "#6ee7a8", "#f08c8c", "#c49bff", "#5fd4e0", "#f2a3d0", "#cfd56b"];
-const LEVEL_NAMES = { easy: "Easy", medium: "Medium", hard: "Hard" };
+const LEVEL_NAMES = { easy: "Easy", medium: "Medium", hard: "Hard", tutor: "Hard" };
 const DIE_ICON = '<svg class="dieic" viewBox="0 0 16 16" aria-label="rolling"><rect x="1.5" y="1.5" width="13" height="13" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="5.5" cy="5.5" r="1.4" fill="currentColor"/><circle cx="10.5" cy="10.5" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/></svg>';
 const TRAINER = "https://timothyhadfield.github.io/bank-ai-trainer/";
 
@@ -17,7 +17,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
   del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } },
 };
-const SET_DEF = { pace: "wait", speed: "normal", early: true, mode: "computer", people: 2, computers: 3, level: "medium", rounds: DEFAULT_OPTIONS.rounds, names: [] };
+const SET_DEF = { pace: "wait", speed: "normal", early: true, mode: "computer", people: 2, computers: 3, level: "medium", rounds: DEFAULT_OPTIONS.rounds, names: [], dice: "app" };
 const settings = Object.assign({}, SET_DEF, store.get("bank:settings", {}));
 const saveSettings = () => store.set("bank:settings", settings);
 
@@ -26,18 +26,18 @@ const saveSettings = () => store.set("bank:settings", settings);
 let G = null;
 let busy = false, timer = null, online = null, snap = null, tab = "play", rng = Math.random;
 
-function saveGame() { if (G && G.mode === "local") store.set("bank:game", { s: G.s, here: G.here, level: G.level, tutorial: G.tutorial, daily: G.daily, gid: G.gid, recorded: G.recorded, kind: G.kind }); }
+function saveGame() { if (G && G.mode === "local") store.set("bank:game", { s: G.s, here: G.here, level: G.level, tutorial: G.tutorial, daily: G.daily, gid: G.gid, recorded: G.recorded, kind: G.kind, real: G.real }); }
 
-function newLocal({ people, computers, level, rounds, names, tutorial = false, daily = false }) {
+function newLocal({ people, computers, level, rounds, names, tutorial = false, daily = false, real = false }) {
   const seats = [];
   for (let i = 0; i < people; i++) seats.push({ kind: "human", name: names[i] || (people === 1 ? (Profile && Profile.name) || "You" : "Player " + (i + 1)) });
   const botNames = ["Ava", "Ben", "Cleo", "Dev", "Esme", "Finn", "Gus"];
   for (let i = 0; i < computers; i++) seats.push({ kind: "computer", name: botNames[i], level });
   rng = tutorial ? tutorialRng(seats.length) : daily ? Profile.daily.rng(undefined, "bank") : Math.random;
   const s = setup(seats.length, { rounds, early: settings.early }, rng, seats);
-  if (tutorial) s.roller = 0;
+  if (tutorial) { s.roller = 0; s.levels = s.levels.map((l, i) => (s.kinds[i] === "computer" ? "tutor" : l)); }
   G = { mode: "local", s, here: seats.map((x, i) => (x.kind === "human" ? i : -1)).filter((i) => i >= 0), level, tutorial, daily,
-    gid: Date.now().toString(36), recorded: false, kind: people > 1 ? "friends" : "computer" };
+    gid: Date.now().toString(36), recorded: false, kind: people > 1 ? "friends" : "computer", real: !!real && !tutorial && !daily };
   saveGame();
   if (COACH) COACH.closeOffer();
   buildTable();
@@ -45,10 +45,10 @@ function newLocal({ people, computers, level, rounds, names, tutorial = false, d
 }
 
 // ------------------------------------------------------------------ local driver
-function localAct(seat, action) {
+function localAct(seat, action, r = rng) {
   if (!G || G.mode !== "local" || busy) return;
   let next;
-  try { next = apply(clone(G.s), seat, action, rng); } catch (e) { toast(e.message); return; }
+  try { next = apply(clone(G.s), seat, action, r); } catch (e) { toast(e.message); return; }
   const prev = G.s; G.s = next; saveGame();
   present(prev, next).then(schedule);
 }
@@ -61,7 +61,7 @@ function schedule() {
   if (G.mode !== "local") { renderActions(); return; }
   const rollerIsComputer = s.kinds[s.roller] === "computer";
   const someoneHere = hereIn().length > 0;
-  if (rollerIsComputer && !(someoneHere && settings.pace === "wait")) {
+  if (rollerIsComputer && !G.real && !(someoneHere && settings.pace === "wait")) {
     const d = someoneHere ? (settings.speed === "fast" ? 900 : 1500) : (settings.speed === "fast" ? 220 : 520);
     timer = setTimeout(() => localAct(s.roller, { t: "roll" }), d);
   }
@@ -206,7 +206,9 @@ function showSetup() {
       ${m === "friends" ? stepper("people", "People", settings.people, 1, 8 - settings.computers) : ""}
       ${stepper("computers", "Computers", settings.computers, m === "computer" ? 1 : 0, 8 - (m === "friends" ? settings.people : 1))}
     </div>
-    ${m === "friends" ? `<div class="names">${Array.from({ length: settings.people }, (_, i) => `<input class="txt" maxlength="14" data-name="${i}" value="${esc(names[i] || "")}" placeholder="Player ${i + 1}" aria-label="Player ${i + 1} name">`).join("")}</div>` : ""}
+    ${m === "friends" ? `<div class="names${settings.people > 4 ? " many" : ""}">${Array.from({ length: settings.people }, (_, i) => `<input class="txt" maxlength="14" data-name="${i}" value="${esc(names[i] || "")}" placeholder="Player ${i + 1}" aria-label="Player ${i + 1} name">`).join("")}</div>` : ""}
+    ${m === "friends" ? `<div class="lbl-row"><span class="label">Dice</span><button class="q" data-q="dice">?</button>
+    <div class="seg mini push" role="group" aria-label="Dice">${[["app", "In the app"], ["real", "Real dice"]].map(([k, t]) => `<button data-dice="${k}" aria-pressed="${settings.dice === k}">${t}</button>`).join("")}</div></div>` : ""}
     ${settings.computers > 0 || m === "computer" ? `<div class="lbl-row"><span class="label">Computer level</span><button class="q" data-q="levels">?</button></div>
     <div class="seg" role="group" aria-label="Computer level">${["easy", "medium", "hard"].map((l) => `<button data-level="${l}" aria-pressed="${settings.level === l}">${LEVEL_NAMES[l]}</button>`).join("")}</div>` : ""}
     <div class="lbl-row"><span class="label">Rounds</span></div>
@@ -232,7 +234,7 @@ function readNames() { document.querySelectorAll("[data-name]").forEach((el) => 
 function startFromSetup() {
   readNames(); saveSettings();
   const people = settings.mode === "computer" ? 1 : settings.people;
-  const k = { people, computers: settings.computers, level: settings.level, rounds: settings.rounds, names: settings.mode === "friends" ? settings.names : [] };
+  const k = { people, computers: settings.computers, level: settings.level, rounds: settings.rounds, names: settings.mode === "friends" ? settings.names : [], real: settings.mode === "friends" && settings.dice === "real" };
   newLocal(k); G.lastSetup = k;
 }
 function startTutorial() {
@@ -290,7 +292,7 @@ function renderTable() {
   seats.style.setProperty("--cols", cols); seats.classList.toggle("c4", cols >= 4);
   seats.innerHTML = s.names.map((nm, i) => {
     const cls = ["seat", i === s.roller && !s.over ? "roller" : "", s.banked[i] ? "banked" : "", G.here.includes(i) && G.here.length === 1 ? "me" : ""].join(" ");
-    const st = s.banked[i] ? "+" + s.gains[i] : i === s.roller && !s.over ? DIE_ICON : "in";
+    const st = s.over ? (winners(s).includes(i) ? "won" : "") : s.banked[i] ? "+" + s.gains[i] : i === s.roller ? DIE_ICON : "in";
     const lvl = s.kinds[i] === "computer" ? `<i class="lv">${LEVEL_NAMES[s.levels[i]][0]}</i>` : "";
     return `<div class="${cls}" data-seat="${i}" style="--c:${COLORS[i]}"><span class="nm"><span class="dot"></span><span class="nmt">${esc(nm)}</span>${lvl}</span><b class="sc num">${s.scores[i]}</b><span class="st">${st}</span></div>`;
   }).join("");
@@ -327,9 +329,9 @@ function renderActions() {
   if (G.mode === "online") {
     rollBtn = rollerHere ? `<button class="btn primary big roll" data-act="roll" ${busy ? "disabled" : ""}>Roll<span class="sub">your dice</span></button>`
       : `<button class="btn big roll" disabled>${esc(s.names[s.roller])}<span class="sub">is rolling</span></button>`;
-  } else if (ins.length === 0) {
+  } else if (ins.length === 0 && !G.real) {
     rollBtn = `<button class="btn big roll" data-act="skip" ${busy ? "disabled" : ""}>Skip<span class="sub">to round end</span></button>`;
-  } else if (rollerComp && settings.pace !== "wait") {
+  } else if (rollerComp && settings.pace !== "wait" && !G.real) {
     rollBtn = `<button class="btn big roll" disabled>${esc(s.names[s.roller])}<span class="sub">is rolling</span></button>`;
   } else {
     rollBtn = `<button class="btn primary big roll" data-act="roll" ${busy ? "disabled" : ""}>Roll<span class="sub">${rollerHere ? (G.here.length > 1 ? esc(s.names[s.roller]) + "'s dice" : "your dice") : esc(s.names[s.roller]) + "'s dice"}</span></button>`;
@@ -407,7 +409,7 @@ const RULES = [
   { id: "roll", title: "Rolling", short: "Rolling", html: `<p>The dice pass round the table: each roll is made by the next player still in the round. Every roll adds to the pot.</p>
     <table><tr><th></th><th>Rolls 1–3</th><th>Roll 4 on</th></tr><tr><td>A 7</td><td>+70</td><td>Round over: the pot is lost</td></tr><tr><td>Doubles</td><td>add the dice</td><td>double the pot</td></tr><tr><td>Anything else</td><td>add the dice</td><td>add the dice</td></tr></table>` },
   { id: "bank", title: "Banking", short: "Bank", html: `<p>Anyone still in may call <b>Bank</b> at any moment, even when it isn't their roll. The whole pot goes onto your score, and you sit out the rest of the round.</p><p>Several players can bank the same round; each gets the pot as it was when they banked. Players who never banked get nothing from a round that ends with a 7.</p><p class="tip">A round also ends when everyone has banked.</p>` },
-  { id: "app", title: "In this app", short: "App", html: `<p>Tap <b>BANK</b> to bank. With <b>Wait for me</b> (Settings), the computers' rolls wait for your Roll tap, so you never miss a moment to bank.</p><p>Computer levels: <b>Easy</b> banks at a set target. <b>Medium</b> is the neural network trained by self-play in Bank Pro AI. <b>Hard</b> is tuned by self-play and plays the last round exactly.</p><p>House rule in Settings: no banking before roll 3 (the old AI trainer's rule).</p>` },
+  { id: "app", title: "In this app", short: "App", html: `<p>Tap <b>BANK</b> to bank. With <b>Wait for me</b> (Settings), the computers' rolls wait for your Roll tap, so you never miss a moment to bank.</p><p>Computer levels: <b>Easy</b> banks at a set target. <b>Medium</b> is the neural network trained by self-play in Bank Pro AI, with the odd careless round. <b>Hard</b> plays whatever measured hardest to beat at your table size (a tuned rule set or the network) and plays the last round exactly.</p><p>House rule in Settings: no banking before roll 3 (the old AI trainer's rule).</p>` },
 ];
 function openRules(open) { COACH.rules({ title: "How to play Bank", sections: RULES, open }); }
 
@@ -462,9 +464,31 @@ function toast(text) {
   clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 2600);
 }
 const QS = {
-  levels: "Measured in thousands of computer games: Hard beats Medium, Medium beats Easy. Your rating moves with each game.",
+  levels: "Measured in thousands of computer games: Medium beats Easy, and Hard beats Medium (clearly with 2 to 4 players, narrowly with more). Your rating moves with each game.",
   early: "The rulebook lets anyone bank at any time. The old AI trainer blocked banking until 3 rolls were in. Takes effect next game.",
+  dice: "Real dice: roll your own dice at the table and tap in what came up. The app keeps the pot and the scores.",
 };
+
+// ------------------------------------------------------------------ real dice: tap in what was rolled
+function pickDice() {
+  if (!G || busy) return;
+  const s = G.s, pick = [0, 0];
+  const row = (r) => `<div class="pick-row" role="group" aria-label="Die ${r + 1}">${[1, 2, 3, 4, 5, 6].map((v) => `<button class="pick" data-r="${r}" data-v="${v}" aria-label="${v}"><span class="pd"></span></button>`).join("")}</div>`;
+  sheet(`<h3>${esc(s.names[s.roller])} rolled</h3><p class="muted">Tap both dice.</p>${row(0)}${row(1)}
+    <div class="row"><button class="btn grow" data-act="cancel">Cancel</button></div>`, () => {});
+  const sh = $(".sheet");
+  sh.querySelectorAll(".pick").forEach((b) => TABLE.die(b.querySelector(".pd"), +b.dataset.v));
+  sh.addEventListener("click", (e) => {
+    const b = e.target.closest(".pick"); if (!b) return;
+    const r = +b.dataset.r; pick[r] = +b.dataset.v;
+    sh.querySelectorAll(`.pick[data-r="${r}"]`).forEach((x) => x.setAttribute("aria-pressed", x === b));
+    if (pick[0] && pick[1]) {
+      const q = pick.map((v) => (v - 0.5) / 6);
+      closeSheet();
+      localAct(G.s.roller, { t: "roll" }, () => (q.length ? q.shift() : Math.random()));
+    }
+  });
+}
 function pop(btn, text) {
   document.querySelectorAll(".pop").forEach((e) => e.remove());
   const p = document.createElement("div"); p.className = "pop"; p.textContent = text; document.body.appendChild(p);
@@ -558,6 +582,7 @@ document.addEventListener("click", (e) => {
   if (b.dataset.mode) { readNames(); settings.mode = b.dataset.mode; if (settings.mode === "computer" && settings.computers < 1) settings.computers = 1; saveSettings(); showSetup(); return; }
   if (b.dataset.level) { readNames(); settings.level = b.dataset.level; saveSettings(); showSetup(); return; }
   if (b.dataset.rounds) { readNames(); settings.rounds = +b.dataset.rounds; saveSettings(); showSetup(); return; }
+  if (b.dataset.dice) { readNames(); settings.dice = b.dataset.dice; saveSettings(); showSetup(); return; }
   if (b.dataset.step) { readNames(); settings[b.dataset.step] += +b.dataset.d; saveSettings(); showSetup(); return; }
   if (b.dataset.pace) { settings.pace = b.dataset.pace; saveSettings(); renderSettings(); schedule(); return; }
   if (b.dataset.speed2) { settings.speed = b.dataset.speed2; saveSettings(); renderSettings(); return; }
@@ -569,7 +594,7 @@ document.addEventListener("click", (e) => {
   else if (a === "stats") Profile && Profile.openPanel();
   else if (a === "quit") quitGame();
   else if (a === "results") showResults();
-  else if (a === "roll") { if (G.mode === "online") onlineAct({ t: "roll" }); else localAct(G.s.roller, { t: "roll" }); }
+  else if (a === "roll") { if (G.mode === "online") onlineAct({ t: "roll" }); else if (G.real) pickDice(); else localAct(G.s.roller, { t: "roll" }); }
   else if (a === "bank") { const seat = +b.dataset.seat; if (G.mode === "online") onlineAct({ t: "bank", rid: G.s.rid }); else localAct(seat, { t: "bank", rid: G.s.rid }); }
   else if (a === "skip") skipRound();
   else if (a === "create") createRoom();
@@ -618,7 +643,7 @@ function boot() {
   if (Profile) {
     Profile.init({
       game: "bank",
-      levels: [{ id: "easy", name: "Easy", rating: 1050 }, { id: "medium", name: "Medium", rating: 1200 }, { id: "hard", name: "Hard", rating: 1300 }],
+      levels: [{ id: "easy", name: "Easy", rating: 1115 }, { id: "medium", name: "Medium", rating: 1200 }, { id: "hard", name: "Hard", rating: 1255 }],
       modes: { friends: { name: "Pass & play" }, online: { name: "Online" } },
       achievements: [
         { id: "first-win", title: "First win", desc: "Win a game of Bank", test: (c) => c.stats.wins >= 1 },

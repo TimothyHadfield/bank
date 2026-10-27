@@ -1,7 +1,7 @@
 // Bank — computer players. Each policy answers one question after every roll: bank now?
 //   easy   : banks at a round target between 60 and 180, ignores the scores.
 //   medium : the trained neural network from Bank_Pro_AI (v1, PPO self-play), ported to JS.
-//   hard   : a rule set tuned by self-play against the network and Easy (tools/tune-hard.mjs), exact last round.
+//   hard   : the strongest measured mix per table size: tuned rules (2, 5-8 players), sharpened network (3-4), exact last round.
 // Win rates: docs/levels.md (tools/measure-levels.mjs, plain node self-play).
 import { NET } from "./net-weights.mjs";
 
@@ -61,11 +61,19 @@ export function netLogits(x) {
   return Array.from(dense(L[2], dense(L[1], dense(L[0], x, true), true), false));
 }
 
-function medium(s, me) {
-  // the trained policy is a probability: sample it, like it was trained (a fixed draw per roll and player)
+/** The trained policy as a probability, sampled like it was trained (a fixed draw per roll and player).
+ *  k < 1 makes it softer (more varied), k > 1 more decisive. */
+export function net(s, me, k = 1) {
   const [bank, cont] = netLogits(netInputs(s, me));
-  const pBank = 1 / (1 + Math.exp(cont - bank));
-  return unit(nameOf(s, me), s.rid, s.round) < pBank;
+  return unit(nameOf(s, me), s.rid, s.round) < 1 / (1 + Math.exp(k * (cont - bank)));
+}
+
+export let MEDIUM_SLIP = 0.5;
+export const setMediumSlip = (p) => { MEDIUM_SLIP = p; };   // tools only
+/** Medium: the trained network, but some rounds it plays like Easy (its own lapses, fixed per round). */
+function medium(s, me) {
+  if (unit(nameOf(s, me), s.round, 3) < MEDIUM_SLIP) return easy(s, me);
+  return net(s, me);
 }
 
 function easy(s, me) {
@@ -74,10 +82,10 @@ function easy(s, me) {
 }
 
 // Tuned by tools/tune-hard.mjs (see docs/levels.md). Thresholds are pot sizes.
-export const HARD = { base: 210.86, perIn: 23.67, behind: 0.22, ahead: 0.22, late: 2.68, maxRolls: 16, spread: 0.15 };
+export const HARD = { base: 146.8, perIn: 22.75, behind: 1.38, ahead: 0.1, late: 2.57, maxRolls: 16, spread: 0.03 };
 
 /** Exact final-round logic, shared by hard: returns true/false, or null when it doesn't decide. */
-function finalRound(s, me) {
+export function finalRound(s, me) {
   if (s.round !== s.opts.rounds) return null;
   const my = s.scores[me], tot = my + s.pot;
   let bestBanked = 0, bestIn = -1;
@@ -108,15 +116,31 @@ export function rules(s, me, _rng, P = HARD) {
   const per = gap / (left + 1);                     // how much I must make up per round
   if (gap > 0) T += P.behind * per * (1 + P.late / (left + 1));
   else T -= P.ahead * -per;
+  // each player's own target for this round (stops identical computers banking on the same roll)
+  if (P.jitter) T *= 1 + P.jitter * (unit(nameOf(s, me), s.round, 7) * 2 - 1);
   T = Math.max(30, T);
   return s.pot >= T || s.roll - 3 >= P.maxRolls;
 }
 
-// Hard = the rule set. A one-step simulation search on top of it (160 play-outs per decision) was tried and
-// measured no better (2p 47.3% vs 47.3%, 4p 52.0% vs 54.7% against Medium, 150 games), so it was dropped.
-export const hard = rules;
+export let HARD_JITTER = 0.25;
+export const setHardJitter = (j) => { HARD_JITTER = j; };   // tools only
+// Hard = the play that measured hardest to beat at that table size (docs/levels.md), always with the exact last round:
+//   2 players  : the tuned rule set (with its own target each round, so two Hards don't move as one)
+//   3-4 players: the trained network as trained
+//   5-8 players: the network with an Easy-style round about 1 time in 3: a varied table is harder to exploit
+//                than look-alike players (at these sizes Hard is only a little stronger than Medium, measured)
+// (A one-step rollout search on top of the rules was tried and measured no better, so it was dropped.)
+export function hard(s, me, rng) {
+  if (s.n === 2) return rules(s, me, rng, { ...HARD, jitter: HARD_JITTER });
+  const f = finalRound(s, me);
+  if (f !== null) return f;
+  if (s.n >= 5 && unit(nameOf(s, me), s.round, 3) < 0.35) return easy(s, me);
+  return net(s, me);
+}
+/** Guided game: the computers stay in during round 1 so the scripted 7 shows what happens. */
+const tutor = (s, me, rng) => s.round > 1 && hard(s, me, rng);
 
-export const POLICIES = { easy, medium, hard, rules };
+export const POLICIES = { easy, medium, hard, rules, tutor };
 
 /** Should seat `me` bank on the current pot? */
 export function decide(s, me, rng) {
