@@ -131,11 +131,20 @@ export const setHardJitter = (j) => { HARD_JITTER = j; };   // tools only
 //                than look-alike players (at these sizes Hard is only a little stronger than Medium, measured)
 // (A one-step rollout search on top of the rules was tried and measured no better, so it was dropped.)
 export function hard(s, me, rng) {
+  if (s.opts.rounds <= 5) return hardShort(s, me, rng);
   if (s.n === 2) return rules(s, me, rng, { ...HARD, jitter: HARD_JITTER });
   const f = finalRound(s, me);
   if (f !== null) return f;
   if (s.n >= 5 && unit(nameOf(s, me), s.round, 3) < 0.35) return easy(s, me);
   return net(s, me);
+}
+/** Hard in the 5-round quick game (measured, docs/levels.md): the long-game mix was easier to beat than Medium there.
+ *  2-5 players: half its rounds the tuned rules, half the network; 6-8: Medium's play. Always the exact last round. */
+function hardShort(s, me, rng) {
+  const f = finalRound(s, me);
+  if (f !== null) return f;
+  if (s.n >= 6) return medium(s, me);
+  return unit(nameOf(s, me), s.round, 3) < 0.5 ? rules(s, me, rng, { ...HARD, jitter: HARD_JITTER }) : net(s, me);
 }
 /** Guided game: the computers stay in during round 1 so the scripted 7 shows what happens. */
 const tutor = (s, me, rng) => s.round > 1 && hard(s, me, rng);

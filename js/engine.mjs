@@ -6,7 +6,7 @@
 import { decide } from "./bots.mjs";
 
 export const MIN_SEATS = 2, MAX_SEATS = 8;
-export const ROUND_CHOICES = [10, 15, 20];
+export const ROUND_CHOICES = [5, 10, 15, 20];   // 5 = quick game (the iOS app offers it; the rulebook says 10, 15 or 20)
 export const DEFAULT_OPTIONS = { rounds: 20, early: true };
 
 const clone = (o) => JSON.parse(JSON.stringify(o));

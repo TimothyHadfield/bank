@@ -225,3 +225,28 @@ table.scores td.lead { color: var(--accent-warm); }
   .potnum { font-size: 52px; }
 }
 @media (prefers-reduced-motion: reduce) { .seat { transition: none; } }
+/* rules sheet videos: the sheet is cream paper, so links and notes need dark ink */
+.coach-rules-body a { color: #2a4f9e; font-weight: 650; }
+.coach-rules-body .vids .muted { color: #5c5546; }
+/* real-dice undo, in the top bar */
+.undo-btn { min-height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-soft); color: var(--text); font-size: 13px; font-weight: 650; cursor: pointer; flex: none; }
+.undo-btn[hidden] { display: none; }
+/* first-visit offer sits above the bottom tab bar on phones (it covered the tabs) */
+@media (max-width: 899px) { :root { --coach-offer-bottom: calc(var(--tabbar) + 8px); } }
+/* setup halves: one column normally; side by side on a phone held sideways so Start fits above the tab bar */
+.setup .sa, .setup .sb { display: contents; }
+@media (max-height: 480px) and (orientation: landscape) {
+  .setup.split { max-width: 780px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+  .setup.split .sa, .setup.split .sb { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .setup.split .hero h1 { font-size: 28px; }
+  .setup.split .hero-dice .hd { --die-size: 28px; }
+}
+/* small phones (iPhone SE size): two steppers side by side and a smaller title, so Start stays above the tab bar */
+@media (max-width: 400px) and (max-height: 600px) {
+  .set-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .setup { gap: 8px; }
+  .hero h1 { font-size: 28px; }
+  .hero-dice .hd { --die-size: 28px; }
+  .names.many .txt { min-height: 34px; }
+  .setup .seg button { min-height: 34px; }
+}

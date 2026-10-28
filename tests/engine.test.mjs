@@ -28,6 +28,7 @@ test("2 to 8 players, rounds 10/15/20, rulebook defaults", () => {
   assert.deepEqual(normOptions({}), { rounds: 20, early: true });
   assert.equal(normOptions({ rounds: 15 }).rounds, 15);
   assert.equal(normOptions({ rounds: 7 }).rounds, 20);
+  assert.equal(normOptions({ rounds: 5 }).rounds, 5, "5-round quick game (the iOS app offers 5/10/15/20)");
 });
 
 test("anyone still in may bank at any time (rulebook), dice pass to the next player still in", () => {
@@ -104,7 +105,7 @@ test("800 random games: never throws, JSON-safe, ends after the set rounds", () 
     const n = 2 + (g % 7);
     const kinds = Array.from({ length: n }, (_, i) => (rng() < 0.5 ? "human" : "computer"));
     const levels = ["easy", "medium", "hard"];
-    const s = setup(n, { rounds: [10, 15, 20][g % 3], early: g % 4 !== 0 }, rng, kinds.map((k, i) => ({ kind: k, level: levels[(g + i) % 3] })));
+    const s = setup(n, { rounds: [5, 10, 15, 20][g % 4], early: g % 4 !== 0 }, rng, kinds.map((k, i) => ({ kind: k, level: levels[(g + i) % 3] })));
     let st = s, steps = 0;
     while (!game.isOver(st)) {
       const who = game.toAct(st);
@@ -204,4 +205,11 @@ test("guided game: the computers stay in during round 1", () => {
   while (s.round === 1) apply(s, s.roller, { t: "roll" }, r);
   assert.deepEqual(s.hist[0].g, [176, 0, 0]);
   assert.ok(s.hist[0].bust);
+});
+
+test("5-round quick game: computers of every level finish it", () => {
+  for (let n = 2; n <= 8; n++) {
+    const s = playGame(Array.from({ length: n }, (_, i) => ["easy", "medium", "hard"][i % 3]), { rounds: 5, seed: 40 + n });
+    assert.ok(s.over); assert.equal(s.hist.length, 5); assert.equal(s.opts.rounds, 5);
+  }
 });
