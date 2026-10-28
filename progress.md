@@ -1,7 +1,7 @@
 # Bank: progress
 
 ## START HERE
-Last updated 2026-10-27. Read this file, then CLAUDE.md, then docs/levels.md, docs/online.md and docs/rules-check.md. chat.md has the session log.
+Last updated 2026-10-28 (wave 3). Read this file, then CLAUDE.md, then docs/levels.md, docs/online.md and docs/rules-check.md. chat.md has the session log.
 Live: https://timothyhadfield.github.io/bank/ · repo TimothyHadfield/bank (Pages, main / root).
 
 ## Goal right now
@@ -19,6 +19,7 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 | Real dice (pass-and-play) | Done: Roll opens a picker, tap the two faces |
 | Online rooms | ON (kit v2), ~440 writes / ~1,007 reads per game; two-phone real-Firestore test passed (docs/online.md) |
 | Hub card, trainer link, PORTFOLIO row | Done |
+| Wave 3 (2026-10-28) | Done: Videos tab in Rules (2 checked videos), 5-round quick game (+ short-game Hard), Undo in real-dice mode, "Keep screen on" switch, landscape setup in two halves, iPhone SE setup fits, first-visit offer above the tab bar |
 
 ## Authorized next steps
 - (2026-10-27) Online switched on (Tim's go). Nothing else beyond upkeep.
@@ -37,6 +38,9 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 - The engine's `normOptions` reads `DEFAULT_OPTIONS`; change the default there only.
 - `node --test tests/` (a folder) fails on Windows here; use `npm test`.
 - Bump `data-version` on js/pwa.js and the `?v=` numbers in index.html on each deploy.
+- **Hard has its own mix for 5-round games** (`hardShort` in js/bots.mjs, `rounds <= 5`). Any change to Hard: measure both `node tools/measure-levels.mjs 400 20` and `... 1500 5`.
+- Real-dice Undo keeps up to 30 earlier states in `G.undo` (saved with the game). Only local real-dice games have it.
+- Video links: only 2 real Bank-dice-game videos exist (searched 2026-10-28; "Bank or Bust", "BANX", "Bang!" are other games).
 
 ## Decisions
 - Rulebook (RulesPal) rules by default: anyone still in may bank at any time. The old trainer rule is the Settings switch "No banking before roll 3".
@@ -50,11 +54,15 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 ## NOT verified
 - A real iPhone (only WebKit at iPhone size), sound on a device, home-screen install on a device.
 - Online rooms on two real iPhones (two headless WebKit phones on real Firestore only, 2026-10-27).
+- "Keep screen on" on a real iPhone (WebKit headless grants the wake lock; iOS home-screen apps only support it from iOS 18.4).
+- A 5-round online room (no online test run with rounds 5; the engine path is the same as local).
 
 ## Reviewer gaps left (Tim's calls or later)
-- No undo in real-dice mode; BANK is disabled during the ~1 s roll animation; no 5-round option; no shared leaderboard; the first-time offer covers the tab bar; phase line during the bust animation.
+- BANK is disabled during the ~1 s roll animation; no shared leaderboard; phase line during the bust animation. (Undo in real-dice mode, 5 rounds and the offer over the tab bar were done 2026-10-28.)
+- Tim's calls from wave 3: "Keep screen on" off by default; Undo is a word button in the top bar (the phase text shifts left once when it first appears); video list wording; 5 rounds offered though the rulebook says 10/15/20.
 
 ## Rejected / parked
 - ~~Rollout search for Hard~~: measured no better than the rule set (2p 47.3% vs 47.3%, 4p 52.0% vs 54.7%), and slow.
 - ~~Sharpened net, pot nerve, rules-only Hard at 3p+~~: measured weaker or more exploitable (docs/levels.md).
+- ~~Made-up variants (other bust numbers, more safe rolls)~~: not documented anywhere (docs/rules-check.md), so not added.
 - ~~Porting the v2 MCTS net~~: needs search at play time; the v1 net plus tuned rules were enough.

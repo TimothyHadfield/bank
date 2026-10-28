@@ -34,6 +34,23 @@ Reading: Medium beats Easy everywhere (by a lot from 3 players). Hard beats Medi
 ## Ties
 Before: two Hards at a 2-player table tied about 71–74% of games (same deterministic policy). The test `Hard ties` requires under 50%; the rules jitter of 0.25 cut 2-Hard ties to about 2–7%.
 
+## 5-round quick game (added 2026-10-28)
+`node tools/measure-levels.mjs 1500 5` with the long-game Hard: the Hard table was EASIER to beat than the Medium table
+at 3-8 players (3p 38.1% vs 32.1%, 600 games). Candidates tried with `tools/try-short.mjs 1500 5` (Medium + last round,
+more Easy rounds 65% / 80%, half rules / half network). Kept `hardShort` in js/bots.mjs: 2-5 players half its rounds the
+tuned rules (jittered), half the network; 6-8 players Medium's play; always the exact last round. Final, 1500 games per cell:
+
+| 5 rounds | 2p | 3p | 4p | 5p | 6p | 7p | 8p |
+|---|---|---|---|---|---|---|---|
+| Easy table | 52.4% | 42.0% | 41.9% | 36.5% | 35.3% | 31.5% | 32.2% |
+| Medium table | 49.4% | 32.6% | 24.1% | 19.7% | 15.0% | 15.5% | 14.6% |
+| Hard table | 47.7% | 31.3% | 23.5% | 19.9% | 17.2% | 15.9% | 15.1% |
+| 1 Hard among Medium | 52.9% | 37.5% | 26.8% | 22.9% | 15.6% | 15.1% | 13.4% |
+| 1 Medium among Easy | 52.7% | 46.5% | 46.5% | 35.8% | 36.4% | 30.1% | 33.2% |
+
+Reading: Hard ≥ Medium ≥ Easy at 2-5 players. At 6-8 players in 5 rounds Hard is about Medium's strength (nothing tried
+beat Medium's table there; short games are mostly luck with that many players). Games of 10-20 rounds are unchanged.
+
 ## Tried and rejected
 - **Rollout search** for Hard: slow on a phone and no measurable gain over the network.
 - **Sharpened network** (higher softmax k / offset): made identical Hard tables more exploitable, not harder.
