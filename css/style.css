@@ -231,8 +231,6 @@ table.scores td.lead { color: var(--accent-warm); }
 /* real-dice undo, in the top bar */
 .undo-btn { min-height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-soft); color: var(--text); font-size: 13px; font-weight: 650; cursor: pointer; flex: none; }
 .undo-btn[hidden] { display: none; }
-/* first-visit offer sits above the bottom tab bar on phones (it covered the tabs) */
-@media (max-width: 899px) { :root { --coach-offer-bottom: calc(var(--tabbar) + 8px); } }
 /* setup halves: one column normally; side by side on a phone held sideways so Start fits above the tab bar */
 .setup .sa, .setup .sb { display: contents; }
 @media (max-height: 480px) and (orientation: landscape) {

@@ -227,7 +227,7 @@ function showSetup() {
   TABLE.die($("#hd1"), 5); TABLE.die($("#hd2"), 2);
   if (m === "online") wireOnlineSetup(v);
   if (COACH && !COACH.offered("bank-first")) {
-    COACH.offer({ id: "bank-first", title: "First time playing Bank?", text: "A guided game shows you the rules in two minutes.", yes: "Show me", no: "No thanks", onYes: startTutorial });
+    COACH.offer({ id: "bank-first", title: "First time playing Bank?", text: "A guided game shows you the rules in two minutes.", yes: "Show me", no: "No thanks", onYes: startTutorial, place: "auto", avoid: ['[data-act="start"]'] });
   }
 }
 const stepper = (key, label, val, min, max) => `<div class="stepper"><span class="label">${label}</span><div class="row"><button class="btn small" data-step="${key}" data-d="-1" ${val <= min ? "disabled" : ""} aria-label="Fewer ${label}">−</button><b class="num">${val}</b><button class="btn small" data-step="${key}" data-d="1" ${val >= max ? "disabled" : ""} aria-label="More ${label}">+</button></div></div>`;
