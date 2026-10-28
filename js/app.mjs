@@ -668,7 +668,8 @@ function boot() {
     setTab("play");
   }
   if (ONLINE_ON) getOnline().then((o) => o.resume()).catch(() => {});
-  if (window.PWA) PWA.safeToReload = () => !online && !document.querySelector(".sheet-back") && !busy && (!G || G.s.over);
+  // "online" is the room controller, made at start-up to resume a room; only a room snapshot means "in a room"
+  if (window.PWA) PWA.safeToReload = () => !snap && !document.querySelector(".sheet-back") && !busy && (!G || G.s.over);
   window.BankApp = { get G() { return G; }, settings, localAct, get busy() { return busy; } };
 }
 boot();
