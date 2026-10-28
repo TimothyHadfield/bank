@@ -29,7 +29,8 @@ A real Bank dice game that beats the paid iOS app ("Bank – A Dice Game", Micah
 - "I want to make our boardgames the best in every single metric we can."
 
 ## Traps
-- **Kits re-copied 2026-10-27 (kitfix):** game-coach 1.1.0 (rules tabs wrap instead of scrolling sideways; a note beside a tall target keeps title + 2 lines + buttons) and game-pwa 1.3.0 (`data-extra` on the pwa.js tag caches files loaded later by script). Copies stay byte-identical to `../_coach` / `../_pwa`. pwa-check is 16/18 here before and after the re-copy ("safe resting point" steps; the game's `safe` config, not the kit).
+- **Kits re-copied 2026-10-27 (kitfix):** game-coach 1.1.0 (rules tabs wrap instead of scrolling sideways; a note beside a tall target keeps title + 2 lines + buttons) and game-pwa 1.3.0 (`data-extra` on the pwa.js tag caches files loaded later by script). Copies stay byte-identical to `../_coach` / `../_pwa`.
+- **`online` in js/app.mjs is the room controller, made on every load** (to resume a room), so it is never a sign of "in a room". `PWA.safeToReload` tests `snap` (the room snapshot) instead. The old `!online` test kept pwa-check at 16/18 (no auto-move to a new build ever); fixed 2026-10-27 kitsweep, 18/18 WebKit.
 - **online.js cache stamp (2026-10-27):** every import of `js/online.js` uses `?v=a3d0418b`, the `_online` content stamp. After a re-copy: put the new stamp from `node ../_online/tools/stamp.mjs` there, bump the importing file's `?v=` (and pwa.js `data-version`), then `node ../_online/tools/stamp.mjs --check .` must say OK.
 - Shared kit files are unchanged copies (list in CLAUDE.md). Fix them in the kit, not here.
 - Bots must never use the game's rng (the Daily game gives everyone the same dice). Personal habits come from `unit(name, ...)` in js/bots.mjs.
